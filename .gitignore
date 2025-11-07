@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+*.gguf
+*.dylib
+.DS_Store
+*.log

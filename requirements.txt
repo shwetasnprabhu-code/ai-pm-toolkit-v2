@@ -1,0 +1,8 @@
+streamlit
+llama-cpp-python
+faiss-cpu
+sentence-transformers
+PyPDF2
+torch
+transformers
+huggingface-hub
