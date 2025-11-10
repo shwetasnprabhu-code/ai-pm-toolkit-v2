@@ -6,3 +6,4 @@ PyPDF2
 torch
 transformers
 huggingface-hub
+nltk
