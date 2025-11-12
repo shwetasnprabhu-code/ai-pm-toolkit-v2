@@ -1,35 +1,33 @@
-# metrics.py
-# metrics.py
+# metrics.py — FINAL WORKING VERSION
 import nltk
-from sentence_transformers import SentenceTransformer, util
+import streamlit as st
 
-# Download required data
-nltk.download('punkt', quiet=True)
-nltk.download('punkt_tab', quiet=True)  # ADD THIS LINE
+# FORCE DOWNLOAD ON FIRST RUN
+@st.cache_resource
+def download_nltk():
+    nltk.download('punkt', quiet=True)
+    nltk.download('wordnet', quiet=True)
+    nltk.download('omw-1.4', quiet=True)  # For METEOR
+    return True
 
-# Load embedder
-_embedder = SentenceTransformer('all-MiniLM-L6-v2')
+download_nltk()  # Run once
 
-# Download once (quietly)
-nltk.download('punkt', quiet=True)
+from nltk.tokenize import word_tokenize
+from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.meteor_score import single_meteor_score
 
-# Load lightweight embedder
-_embedder = SentenceTransformer('all-MiniLM-L6-v2')
-
-def bleu_score(reference: str, candidate: str) -> float:
-    """BLEU score (higher = better)"""
-    ref_tokens = nltk.word_tokenize(reference.lower())
-    cand_tokens = nltk.word_tokenize(candidate.lower())
-    return nltk.translate.bleu_score.sentence_bleu([ref_tokens], cand_tokens, weights=(0.5, 0.5))
-
-def bertscore(reference: str, candidate: str) -> float:
-    """Semantic similarity (0-1)"""
-    ref_emb = _embedder.encode(reference, convert_to_tensor=True)
-    cand_emb = _embedder.encode(candidate, convert_to_tensor=True)
-    return util.cos_sim(ref_emb, cand_emb).item()
-
-def evaluate(golden: str, generated: str) -> dict:
-    return {
-        "BLEU": round(bleu_score(golden, generated), 3),
-        "BERTScore": round(bertscore(golden, generated), 3)
-    }
+def evaluate(response: str, reference: str = "ground truth summary") -> dict:
+    try:
+        ref_tokens = word_tokenize(reference.lower())
+        cand_tokens = word_tokenize(response.lower())
+        
+        bleu = sentence_bleu([ref_tokens], cand_tokens)
+        meteor = single_meteor_score(" ".join(ref_tokens), " ".join(cand_tokens))
+        
+        return {
+            "BLEU": round(bleu, 3),
+            "METEOR": round(meteor, 3),
+            "Length": len(cand_tokens)
+        }
+    except Exception as e:
+        return {"Error": str(e)}
