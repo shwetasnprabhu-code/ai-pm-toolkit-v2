@@ -8,11 +8,11 @@ if not os.path.exists("phi3.gguf"):
     from huggingface_hub import hf_hub_download
     hf_hub_download(
         repo_id="TheBloke/Phi-3-mini-4k-instruct-GGUF",
-        filename="phi-3-mini-4k-instruct.Q4_0.gguf",  # CORRECT: HYPHEN, NOT UNDERSCORE
+        filename="phi-3-mini-4k-instruct.Q4_K_M.gguf",  # CORRECT FILE
         local_dir=".",
         local_dir_use_symlinks=False
     )
-    os.rename("phi-3-mini-4k-instruct.Q4_0.gguf", "phi3.gguf")
+    os.rename("phi-3-mini-4k-instruct.Q4_K_M.gguf", "phi3.gguf")
     print("Model downloaded and ready!")
 
 @st.cache_resource
