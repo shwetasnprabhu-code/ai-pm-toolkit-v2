@@ -32,10 +32,13 @@ except Exception as e:
 # === TABS ===
 tab1, tab2 = st.tabs(["A/B Prompt Lab", "RAG 101"])
 
+
 # === TAB 1: A/B TESTING ===
 with tab1:
     if not INFERENCE_OK:
         st.error("Fix inference.py first.")
+    elif not METRICS_OK:
+        st.warning("Metrics loading...")
     else:
         st.markdown("## A/B Prompt Testing")
         model = st.selectbox("LLM", ["Phi-3"], key="model_ab")
@@ -50,13 +53,21 @@ with tab1:
 
         if run_a:
             with st.spinner("Generating A..."):
-                resp, meta = generate(prompt_a, model)
-                st.write(resp)
+                resp_a, _ = generate(prompt_a, model)
+                st.write("**Response A:**")
+                st.write(resp_a)
+                reference = "Zohran Mamdani is a democratic socialist and New York State Assembly member."
+                scores = evaluate(resp_a, reference)
+                st.json(scores)
+                
         if run_b:
             with st.spinner("Generating B..."):
-                resp, meta = generate(prompt_b, model)
-                st.write(resp)
-
+                resp_b, _ = generate(prompt_b, model)
+                st.write("**Response B:**")
+                st.write(resp_b)
+                reference = "Zohran Mamdani is a democratic socialist and New York State Assembly member."
+                scores = evaluate(resp_b, reference)
+                st.json(scores)
 # === TAB 2: RAG 101 ===
 with tab2:
     if not RAG_OK:
