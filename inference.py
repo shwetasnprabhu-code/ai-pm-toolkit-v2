@@ -4,16 +4,16 @@ from llama_cpp import Llama
 import streamlit as st  # ADD THIS LINE
 import os
 if not os.path.exists("phi3.gguf"):
-    print("Downloading Phi-3 GGUF (2.4GB)...")
+    print("Downloading Phi-3 GGUF (2.4GB)... This takes ~5 minutes on first run.")
     from huggingface_hub import hf_hub_download
     hf_hub_download(
         repo_id="TheBloke/Phi-3-mini-4k-instruct-GGUF",
-        filename="phi-3-mini-4k-instruct.Q4_0.gguf",  
+        filename="phi-3-mini-4k-instruct.Q4_0.gguf",  # CORRECT
         local_dir=".",
         local_dir_use_symlinks=False
-        )
+    )
     os.rename("phi-3-mini-4k-instruct.Q4_0.gguf", "phi3.gguf")
-    print("Model ready!")
+    print("Model downloaded and ready!")
 
 @st.cache_resource
 def get_llm():
