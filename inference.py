@@ -7,13 +7,12 @@ if not os.path.exists("phi3.gguf"):
     print("Downloading Phi-3 GGUF (2.4GB)...")
     from huggingface_hub import hf_hub_download
     hf_hub_download(
-        repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
-        filename="Phi-3-mini-4k-instruct-q4_0.gguf",
-        local_dir=".",
-        local_dir_use_symlinks=False
+        repo_id="TheBloke/Phi-3-mini-4k-instruct-GGUF",
+        filename="phi-3-mini-4k-instruct.Q4_0.gguf",
+        local_dir="."
     )
-    os.rename("Phi-3-mini-4k-instruct-q4_0.gguf", "phi3.gguf")
-    print("Model downloaded!")
+    os.rename("phi-3-mini-4k-instruct.Q4_0.gguf", "phi3.gguf")
+    print("Model ready!")
 
 @st.cache_resource
 def get_llm():
