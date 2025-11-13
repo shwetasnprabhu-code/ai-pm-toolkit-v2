@@ -18,17 +18,39 @@ if not os.path.exists("phi3.gguf"):
 @st.cache_resource
 def get_llm():
     model_path = "phi3.gguf"
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model {model_path} not found! Place it in project folder.")
     
-    print(f"Loading Phi-3 GGUF... (first time ~20s)")
-    return Llama(
-        model_path=model_path,
-        n_ctx=4096,
-        n_threads=8,
-        n_gpu_layers=999,  # Metal acceleration
-        verbose=False
-    )
+    # AUTO-DOWNLOAD IF MISSING
+    if not os.path.exists(model_path):
+        with st.spinner("Downloading Phi-3 GGUF (2.2GB)... This takes ~5 minutes."):
+            from huggingface_hub import hf_hub_download
+            Downloaded = False
+            while not Downloaded:
+                try:
+                    hf_hub_download(
+                        repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
+                        filename="Phi-3-mini-4k-instruct-q4.gguf",
+                        local_dir=".",
+                        local_dir_use_symlinks=False
+                    )
+                    os.rename("Phi-3-mini-4k-instruct-q4.gguf", model_path)
+                    Downloaded = True
+                    st.success("Model downloaded!")
+                except Exception as e:
+                    st.warning(f"Download failed: {e}. Retrying in 10s...")
+                    time.sleep(10)
+
+    # LOAD MODEL WITH ERROR HANDLING
+    try:
+        return Llama(
+            model_path=model_path,
+            n_ctx=4096,
+            n_threads=8,
+            n_gpu_layers=0,  # CPU only
+            verbose=False
+        )
+    except Exception as e:
+        st.error(f"Failed to load model: {e}")
+        raise
 
 def generate(prompt, model=None):
     llm = get_llm()
