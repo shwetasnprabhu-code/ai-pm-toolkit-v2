@@ -12,7 +12,7 @@ if not os.path.exists("phi3.gguf"):
         local_dir=".",
         local_dir_use_symlinks=False
     )
-    os.rename("Phi-3-mini-4k-instruct-q4_0.gguf", "phi3.gguf")
+    os.rename("Phi-3-mini-4k-instruct-q4.gguf", "phi3.gguf")
     print("Model downloaded!")
 
 @st.cache_resource
