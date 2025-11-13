@@ -21,7 +21,7 @@ def get_llm():
     hf_file = "Phi-3-mini-4k-instruct-q4.gguf"
 
     if not os.path.exists(model_path):
-        with st.spinner("Downloading Phi-3 GGUF (2.2GB)... ~5 min"):
+        with st.spinner("Downloading Phi-3 GGUF (2.2GB)..."):
             from huggingface_hub import hf_hub_download
             hf_hub_download(
                 repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
@@ -31,49 +31,33 @@ def get_llm():
             os.rename(hf_file, model_path)
             st.success("Model ready!")
 
-    try:
-        from llama_cpp import Llama
-        return Llama(
-            model_path=model_path,
-            n_ctx=4096,
-            n_threads=8,
-            n_gpu_layers=0,
-            verbose=False
-        )
-    except Exception as e:
-        st.error(f"Model load failed: {e}")
-        raise
+    from llama_cpp import Llama
+    return Llama(
+        model_path=model_path,
+        n_ctx=2048,           # Reduced from 4096 → faster
+        n_threads=8,
+        n_batch=512,          # Faster batching
+        n_gpu_layers=0,
+        verbose=False
+    )
         
-def generate(prompt, model=None):
-    llm = get_llm()
-    start = time.time()
-    
-    # Truncate if too long
-    tokens = llm.tokenize(prompt.encode('utf-8'))
-    if len(tokens) > 3800:
-        prompt = llm.detokenize(tokens[:3800]).decode('utf-8', errors='ignore')
-
-    full_prompt = f"<|system|>You are a helpful assistant. Use ONLY the context.<|end|>\n<|user|>\n{prompt}<|end|>\n<|assistant|>"
-    
-    try:
-        output = llm(
-            full_prompt,
-            max_tokens=256,
+def generate(prompt: str, model):
+    with st.spinner("Generating (3–5s)..."):
+        output = model(
+            prompt,
+            max_tokens=512,
             temperature=0.7,
-            top_p=0.95,
-            stop=["<|end|>"],
+            top_p=0.9,
+            stop=["<|end|>", "<|user|>", "<|assistant|>"],
+            stream=True,
             echo=False
         )
-        response = output["choices"][0]["text"].strip()
-        if not response:
-            response = "No answer found in context."
-            
-    except Exception as e:
-        response = f"[Error: {str(e)}]"
-    
-    latency = time.time() - start
-    return response, {
-        "latency_sec": round(latency, 2),
-        "tokens": 999,
-        "cost_usd": 0
-    }
+        
+        response = ""
+        placeholder = st.empty()
+        for chunk in output:
+            token = chunk["choices"][0]["text"]
+            response += token
+            placeholder.markdown(f"**Answer**\n{response}")
+        
+        return response
