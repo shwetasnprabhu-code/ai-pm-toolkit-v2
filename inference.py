@@ -1,8 +1,8 @@
 # inference.py — FINAL CLEAN (NO st!)
-import time
-from llama_cpp import Llama
-import streamlit as st  # ADD THIS LINE
 import os
+import time
+import streamlit as st
+from llama_cpp import Llama
 if not os.path.exists("phi3.gguf"):
     print("Downloading Phi-3 GGUF (2.2GB)... This takes ~5 minutes.")
     from huggingface_hub import hf_hub_download
@@ -18,38 +18,48 @@ if not os.path.exists("phi3.gguf"):
 @st.cache_resource
 def get_llm():
     model_path = "phi3.gguf"
-    
-    # AUTO-DOWNLOAD IF MISSING
-    if not os.path.exists(model_path):
-        with st.spinner("Downloading Phi-3 GGUF (2.2GB)... This takes ~5 minutes."):
-            from huggingface_hub import hf_hub_download
-            Downloaded = False
-            while not Downloaded:
-                try:
-                    hf_hub_download(
-                        repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
-                        filename="Phi-3-mini-4k-instruct-q4.gguf",
-                        local_dir=".",
-                        local_dir_use_symlinks=False
-                    )
-                    os.rename("Phi-3-mini-4k-instruct-q4.gguf", model_path)
-                    Downloaded = True
-                    st.success("Model downloaded!")
-                except Exception as e:
-                    st.warning(f"Download failed: {e}. Retrying in 10s...")
-                    time.sleep(10)
+    correct_filename = "Phi-3-mini-4k-instruct-q4.gguf"
+    expected_size = 2_200_000_000  # ~2.2 GB
 
-    # LOAD MODEL WITH ERROR HANDLING
+    # DELETE CORRUPTED FILE
+    if os.path.exists(model_path):
+        actual_size = os.path.getsize(model_path)
+        if actual_size < expected_size * 0.9:  # Less than 90%
+            st.warning(f"Corrupted model ({actual_size/1e9:.2f} GB). Deleting...")
+            os.remove(model_path)
+
+    # DOWNLOAD WITH VERIFICATION
+    if not os.path.exists(model_path):
+        with st.spinner("Downloading Phi-3 GGUF (2.2GB)... ~5 min"):
+            from huggingface_hub import hf_hub_download
+            try:
+                hf_hub_download(
+                    repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
+                    filename=correct_filename,
+                    local_dir=".",
+                    local_dir_use_symlinks=False
+                )
+                os.rename(correct_filename, model_path)
+                final_size = os.path.getsize(model_path)
+                if final_size > expected_size * 0.9:
+                    st.success(f"Model ready! ({final_size/1e9:.2f} GB)")
+                else:
+                    raise ValueError("Download incomplete")
+            except Exception as e:
+                st.error(f"Download failed: {e}")
+                raise
+
+    # LOAD MODEL
     try:
         return Llama(
             model_path=model_path,
             n_ctx=4096,
             n_threads=8,
-            n_gpu_layers=0,  # CPU only
+            n_gpu_layers=0,
             verbose=False
         )
     except Exception as e:
-        st.error(f"Failed to load model: {e}")
+        st.error(f"Model load failed: {e}")
         raise
 
 def generate(prompt, model=None):
