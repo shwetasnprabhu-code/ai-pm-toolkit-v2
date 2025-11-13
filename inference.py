@@ -43,7 +43,6 @@ def get_llm():
         
 def generate(prompt: str, model):
     with st.spinner("Generating (3–5s)..."):
-        # llama.cpp streaming returns dicts with 'choices' → text
         output = model(
             prompt,
             max_tokens=512,
@@ -51,12 +50,13 @@ def generate(prompt: str, model):
             top_p=0.9,
             stop=["<|end|>", "<|user|>", "<|assistant|>"],
             stream=True
+            # echo=False REMOVED — NOT SUPPORTED
         )
         
         response = ""
         placeholder = st.empty()
         for chunk in output:
-            # CORRECT: chunk["choices"][0]["delta"]["content"] or ["text"]
+            # llama.cpp streaming returns dict with "choices"
             if "choices" in chunk and len(chunk["choices"]) > 0:
                 text = chunk["choices"][0].get("text", "")
                 response += text
