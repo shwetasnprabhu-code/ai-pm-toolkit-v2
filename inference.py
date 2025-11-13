@@ -49,17 +49,7 @@ def generate(prompt: str, model):
             temperature=0.7,
             top_p=0.9,
             stop=["<|end|>", "<|user|>", "<|assistant|>"],
-            stream=True
-            # echo=False REMOVED — NOT SUPPORTED
+            echo=False,        # NOW VALID
+            stream=False       # DISABLED — STABLE
         )
-        
-        response = ""
-        placeholder = st.empty()
-        for chunk in output:
-            # llama.cpp streaming returns dict with "choices"
-            if "choices" in chunk and len(chunk["choices"]) > 0:
-                text = chunk["choices"][0].get("text", "")
-                response += text
-                placeholder.markdown(f"**Answer**\n{response}")
-        
-        return response
+        return output["choices"][0]["text"]
