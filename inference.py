@@ -19,49 +19,43 @@ if not os.path.exists("phi3.gguf"):
 def get_llm():
     model_path = "phi3.gguf"
     correct_filename = "Phi-3-mini-4k-instruct-q4.gguf"
-    expected_size = 2_200_000_000  # ~2.2 GB
 
-    # DELETE CORRUPTED FILE
+    # DELETE & REDOWNLOAD IF NEEDED
     if os.path.exists(model_path):
-        actual_size = os.path.getsize(model_path)
-        if actual_size < expected_size * 0.9:  # Less than 90%
-            st.warning(f"Corrupted model ({actual_size/1e9:.2f} GB). Deleting...")
+        if os.path.getsize(model_path) < 2_000_000_000:
+            st.warning("Corrupted model. Redownloading...")
             os.remove(model_path)
 
-    # DOWNLOAD WITH VERIFICATION
     if not os.path.exists(model_path):
-        with st.spinner("Downloading Phi-3 GGUF (2.2GB)... ~5 min"):
+        with st.spinner("Downloading Phi-3 GGUF (2.2GB)..."):
             from huggingface_hub import hf_hub_download
-            try:
-                hf_hub_download(
-                    repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
-                    filename=correct_filename,
-                    local_dir=".",
-                    local_dir_use_symlinks=False
-                )
-                os.rename(correct_filename, model_path)
-                final_size = os.path.getsize(model_path)
-                if final_size > expected_size * 0.9:
-                    st.success(f"Model ready! ({final_size/1e9:.2f} GB)")
-                else:
-                    raise ValueError("Download incomplete")
-            except Exception as e:
-                st.error(f"Download failed: {e}")
-                raise
+            hf_hub_download(
+                repo_id="microsoft/Phi-3-mini-4k-instruct-gguf",
+                filename=correct_filename,
+                local_dir=".",
+                local_dir_use_symlinks=False
+            )
+            os.rename(correct_filename, model_path)
+            st.success("Model downloaded!")
 
-    # LOAD MODEL
-    try:
-        return Llama(
-            model_path=model_path,
-            n_ctx=4096,
-            n_threads=8,
-            n_gpu_layers=0,
-            verbose=False
-        )
-    except Exception as e:
-        st.error(f"Model load failed: {e}")
-        raise
-
+    # LOAD WITH RETRY
+    for attempt in range(3):
+        try:
+            st.info(f"Loading model (attempt {attempt + 1})...")
+            llm = Llama(
+                model_path=model_path,
+                n_ctx=4096,
+                n_threads=8,
+                n_gpu_layers=0,
+                verbose=False
+            )
+            st.success("Model loaded!")
+            return llm
+        except Exception as e:
+            st.error(f"Load failed: {e}")
+            time.sleep(5)
+    raise ValueError("Failed to load model after 3 attempts")
+    
 def generate(prompt, model=None):
     llm = get_llm()
     start = time.time()
