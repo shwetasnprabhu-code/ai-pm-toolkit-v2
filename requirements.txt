@@ -1,9 +1,9 @@
 streamlit
 faiss-cpu
 sentence-transformers
-PyPDF2
+pypdf2
 torch
 transformers
 huggingface-hub
 nltk
-llama-cpp-python==0.2.90
+llama-cpp-python[all]==0.2.90
