@@ -29,15 +29,21 @@ def get_llm():
                 local_dir="."
             )
             os.rename(hf_file, model_path)
-            st.success("Model downloaded!")
+            st.success("Model ready!")
 
-    return Llama(
-        model_path=model_path,
-        n_ctx=4096,
-        n_threads=8,
-        n_gpu_layers=0,
-        verbose=False
-    )
+    try:
+        from llama_cpp import Llama
+        return Llama(
+            model_path=model_path,
+            n_ctx=4096,
+            n_threads=8,
+            n_gpu_layers=0,
+            verbose=False
+        )
+    except Exception as e:
+        st.error(f"Model load failed: {e}")
+        raise
+        
 def generate(prompt, model=None):
     llm = get_llm()
     start = time.time()
