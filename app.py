@@ -41,7 +41,12 @@ with tab1:
         st.warning("Metrics loading...")
     else:
         st.markdown("## A/B Prompt Testing")
-        model = st.selectbox("LLM", ["Phi-3"], key="model_ab")
+        model = st.session_state.get("llm")
+        if model is None:
+            with st.spinner("Loading Phi-3 GGUF..."):
+                from inference import get_llm
+                model = get_llm()
+                st.session_state.llm = model
         
         col1, col2 = st.columns(2)
         with col1:
