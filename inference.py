@@ -49,8 +49,8 @@ def generate(prompt: str, model):
             temperature=0.7,
             top_p=0.9,
             stop=["<|end|>", "<|user|>", "<|assistant|>"],
-            stream=True,
-            echo=False
+            stream=True
+            # echo=False REMOVED — NOT SUPPORTED
         )
         
         response = ""
