@@ -31,18 +31,18 @@ def get_llm():
     )
 
 def generate(prompt, model=None):
-    llm = get_llm()
+    if model is None:
+        model = get_llm()  # Only load if not provided
     start = time.time()
-    
+   
     # Truncate if too long
-    tokens = llm.tokenize(prompt.encode('utf-8'))
+    tokens = model.tokenize(prompt.encode('utf-8'))
     if len(tokens) > 3800:
-        prompt = llm.detokenize(tokens[:3800]).decode('utf-8', errors='ignore')
-
+        prompt = model.detokenize(tokens[:3800]).decode('utf-8', errors='ignore')
     full_prompt = f"<|system|>You are a helpful assistant. Use ONLY the context.<|end|>\n<|user|>\n{prompt}<|end|>\n<|assistant|>"
-    
+   
     try:
-        output = llm(
+        output = model(
             full_prompt,
             max_tokens=256,
             temperature=0.7,
@@ -53,10 +53,10 @@ def generate(prompt, model=None):
         response = output["choices"][0]["text"].strip()
         if not response:
             response = "No answer found in context."
-            
+           
     except Exception as e:
         response = f"[Error: {str(e)}]"
-    
+   
     latency = time.time() - start
     return response, {
         "latency_sec": round(latency, 2),
