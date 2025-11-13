@@ -6,4 +6,4 @@ torch
 transformers
 huggingface-hub
 nltk
-llama-cpp-python==0.2.85
+llama-cpp-python>=0.2.90
