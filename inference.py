@@ -34,9 +34,9 @@ def get_llm():
     from llama_cpp import Llama
     return Llama(
         model_path=model_path,
-        n_ctx=2048,           # Reduced from 4096 → faster
+        n_ctx=2048,
         n_threads=8,
-        n_batch=512,          # Faster batching
+        n_batch=512,
         n_gpu_layers=0,
         verbose=False
     )
